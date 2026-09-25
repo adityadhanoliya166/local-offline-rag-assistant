@@ -1,0 +1,16 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# Local Vector Store & Temporary Uploads
+chroma_db/
+temp_*
+*.txt
+
+# VS Code settings
+.vscode/

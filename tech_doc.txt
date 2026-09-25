@@ -1,0 +1,65 @@
+================================================================================
+NEXUS-5 ENTERPRISE SERVER CLUSTER: OPERATIONAL MANUAL (VERSION 4.2)
+================================================================================
+
+SECTION 1: SYSTEM OVERVIEW & ARCHITECTURE
+1.1 Physical Layout
+The Nexus-5 Enterprise Cluster consists of four primary nodes (Node-A, Node-B, Node-C, Node-D) arranged in a redundant matrix configuration. Each node contains twin 64-core Quantum Blade processors, 1.5 TB of DDR5 ECC RAM, and dual-channel fiber optical interconnects running at 400 Gbps.
+
+1.2 Thermal & Power Specifications
+- Operating Temperature: Optimal performance is maintained between 18°C and 22°C. Internal thermal throttling automatically triggers at 78°C.
+- Power Allocation: Total rack draw maxes out at 4,800 Watts. Primary power relies on Dual Line A/B feeds (240V AC). Backup battery array (UPS Module 7) provides up to 45 minutes of continuous power during total grid failure.
+
+1.3 Default Network Configuration
+- Primary Gateway: 192.168.100.1
+- Management Subnet: 10.250.0.0/24
+- Internal Storage Bus (SAN): 172.16.88.0/20
+- Port 8443: Web Management Console (HTTPS)
+- Port 22022: Secure SSH Terminal Access (Direct root access is disabled)
+
+
+SECTION 2: ERROR CODES & IMMEDIATE ACTIONS
+2.1 Error Code 501 - "Memory Synchronization Failure"
+- Symptom: Node-B or Node-C LED flashes amber twice per second.
+- Cause: ECC RAM timing mismatch between Channel 3 and Channel 4.
+- Resolution Steps:
+  1. SSH into node via terminal (`ssh admin@10.250.0.12`).
+  2. Execute command: `systemctl restart nexus-mem-sync`.
+  3. If issue persists, drain active jobs (`nexus-admin drain --node-id B`) and perform cold reboot.
+
+2.2 Error Code 909 - "Optical Interconnect Degradation"
+- Symptom: Inter-node latency spikes above 150 microseconds.
+- Cause: Dust accumulation or bend radius violation on optical cables between Node-A and Node-D.
+- Resolution Steps: Inspect fiber cable FC-04, clean optical transceivers with lint-free isopropyl wipes, and ensure minimum bend radius of 30mm is maintained.
+
+2.3 Error Code 120 - "RAID Controller Degraded"
+- Symptom: Storage pool speed reduced by 50%; red light on Bay 7.
+- Cause: NVMe drive failure in RAID-6 array.
+- Resolution Steps: Drive is hot-swappable. Pull Bay 7 drive lever, replace with NVMe SKU-9912 drive, and wait for automatic background rebuild (approximately 3.5 hours).
+
+
+SECTION 3: SECURITY & COMPLIANCE POLICIES
+3.1 Access Control & Password Rules
+- All administrative accounts require hardware-token Multi-Factor Authentication (MFA).
+- Passwords must be at least 16 characters long and rotated every 60 days.
+- Password histories are saved for 12 iterations; reuse of previous passwords is blocked.
+
+3.2 Data Retention & Backups
+- Hot Backups: Incremental snapshots occur every 15 minutes and are stored on the local SAN for 72 hours.
+- Cold Archives: Full encrypted system images are written to Offsite S3 Storage every Sunday at 02:00 UTC. Archives are retained for 7 years to satisfy ISO-27001 compliance.
+
+3.3 Security Incident Escalation
+If unauthorized root activity or unapproved outbound traffic is detected:
+1. Immediately isolate the affected node using command: `nexus-sec isolate --node [NODE_ID]`.
+2. Do NOT reboot or power off the machine to preserve volatile RAM evidence.
+3. Contact the Cyber Security Operations Center (CSOC) on extension 4911 or emergency channel #csoc-sev1.
+
+
+SECTION 4: MAINTENANCE SCHEDULE & CONTACTS
+4.1 Routine Maintenance Window
+Regular system upgrades and hardware checks take place strictly on the first Saturday of each month from 01:00 AM to 05:00 AM UTC.
+
+4.2 Critical System Escalation Directory
+- Chief Infrastructure Engineer: Marcus Vance (Ext: 1022 | Phone: +1-555-019-2831)
+- Lead Storage Administrator: Priya Patel (Ext: 1045 | Email: p.patel@nexus-cluster.internal)
+- On-Call Hardware Technician: Shift Lead (Radio Channel: Infra-7)
